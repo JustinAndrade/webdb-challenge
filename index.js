@@ -2,13 +2,15 @@
 const express = require('express');
 const knex = require('knex');
 const server = express();
-const db = knex('./knexfile.js').development;
+const knexConfig = require('./knexfile.js');
+const db = knex(knexConfig.development);
 
-// Server Get Commands
+// API GET COMMANDS START //
 server.get('/', (req, res) => {
 	res.status(200).json('Welcome to the Project Tracker API');
 });
 
+// Projects
 server.get('/projects', (req, res) => {
 	db('projects')
 		.then((projects) => {
@@ -18,8 +20,68 @@ server.get('/projects', (req, res) => {
 			res.status(500).json(err);
 		});
 });
+server.get('/projects/:id', async (req, res) => {
+	try {
+		const actions = await db('projects')
+			.innerJoin('actions', 'actions.project_id', 'projects.id')
+			.select('actions.id', 'actions.description', 'actions.notes', 'actions.completed')
+			.where('projects.id', req.params.id);
+		const project = await db('projects').where({ id: req.params.id });
+		project.length !== 0
+			? res.status(200).json({
+					...project,
+					actions: actions
+				})
+			: res.status(404).json({ err: 'A project with that ID could not be found.' });
+	} catch (err) {
+		res.status(500).json({ error: 'The project information could not be retrieved' });
+	}
+});
+// Actions
+server.get('/actions', (req, res) => {
+	db('actions')
+		.then((actions) => {
+			res.status(201).json(actions);
+		})
+		.catch((err) => {
+			res.status(500).json(err);
+		});
+});
+server.get('/projects/:id/actions', (req, res) => {
+	db('actions')
+		.where({ project_id: req.params.id })
+		.then((actions) => {
+			res.status(201).json(actions);
+		})
+		.catch((err) => {
+			res.status(500).json(err);
+		});
+});
+// API GET COMMANDS END //
 
-//
+// API Post Commands
+server.post('/projects', (req, res) => {
+	db('projects')
+		.insert(req.body)
+		.then((newProject) => {
+			res.status(201).json(newProject);
+		})
+		.catch((err) => {
+			res.status(500).json(err);
+		});
+});
+
+server.post('/projects/:id/actions', (req, res) => {
+	db('actions')
+		.where({ id: req.params.id })
+		.insert(req.body)
+		.then((newAction) => {
+			res.status(201).json(newAction);
+		})
+		.catch((err) => {
+			res.status(500).json(err);
+		});
+});
 
 // Server Listening on port 5000
 
