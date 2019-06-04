@@ -1,9 +1,9 @@
 exports.up = async function(knex) {
 	await knex.schema.createTable('projects', (tbl) => {
 		tbl.increments('id');
-		tbl.string('name').notNullable();
-		tbl.string('description').notNullable();
-		tbl.boolean('flag').notNullable();
+		tbl.string('name');
+		tbl.string('description');
+		tbl.boolean('flag');
 	});
 
 	await knex.schema.createTable('actions', (tbl) => {
@@ -17,11 +17,7 @@ exports.up = async function(knex) {
 	await knex.schema.table('projects', (tbl) => {
 		tbl.renameColumn('flag', 'completed');
 	});
-	await knex('projects', (tbl) => {
-		tbl.join('actions');
-	});
 };
-
 exports.down = async function(knex) {
 	await knex.schema.dropTableIfExists('projects');
 	await knex.schema.dropTableIfExists('actions');

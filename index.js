@@ -3,6 +3,7 @@ const express = require('express');
 const knex = require('knex');
 const server = express();
 const knexConfig = require('./knexfile.js');
+server.use(express.json());
 const db = knex(knexConfig.development);
 
 // API GET COMMANDS START //
@@ -60,9 +61,9 @@ server.get('/projects/:id/actions', (req, res) => {
 // API GET COMMANDS END //
 
 // API Post Commands
-server.post('/projects', (req, res) => {
-	db('projects')
-		.insert(req.body)
+server.post('/projects', async (req, res) => {
+	await db('projects')
+		.insert({ name: req.params.name, description: req.params.description }, 'id')
 		.then((newProject) => {
 			res.status(201).json(newProject);
 		})
@@ -71,18 +72,16 @@ server.post('/projects', (req, res) => {
 		});
 });
 
-server.post('/projects/:id/actions', (req, res) => {
+server.post('/actions/', (req, res) => {
 	db('actions')
-		.where({ id: req.params.id })
 		.insert(req.body)
-		.then((newAction) => {
-			res.status(201).json(newAction);
+		.then((action) => {
+			res.status(201).json(action);
 		})
 		.catch((err) => {
-			res.status(500).json(err);
+			res.status(500).json({ message: 'Error creating that action', err });
 		});
 });
-
 // Server Listening on port 5000
 
 const port = 5000;
